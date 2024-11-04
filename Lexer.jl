@@ -54,9 +54,42 @@ function scan_token(lexer::Lexer)
                 nothing;
             end
         '"' => string(lexer)
+        _   => if is_digit(ch)
+                number(lexer)
+               else
+                    error("Unexpected character.")
+               end
+        end
+end
 
-        _   => error("Unexpected character on line.")
+function is_digit(ch::Char)
+    ch >= '0' && ch <= '9'
+end
+
+function number(lexer::Lexer)
+    while is_digit(peek(lexer))
+        advance!(lexer)
     end
+
+    if peek(lexer) == '.' && is_digit(peek_next(lexer))
+        advance!(lexer)
+
+        while is_digit(peek(lexer))
+            advance!(lexer)
+        end
+        
+    end
+
+    number_str = lexer.source[lexer.start : lexer.current]
+    add_token(lexer, NUMBER, parse(Float64, number_str))
+end
+
+function peek_next(lexer)
+    if lexer.current + 1 >= length(lexer.source) 
+        return '\0' 
+    end
+
+    lexer.source[lexer.current + 1]
 end
 
 function peek(lexer::Lexer)
@@ -114,7 +147,7 @@ function string(lexer::Lexer)
 end
 
 # Create an instance of Lexer with an empty tokens array
-L = Lexer(" \"well well well\" ", Vector{Token}(), 1, 1, 1)
+L = Lexer(" 36.14 ", Vector{Token}(), 1, 1, 1)
 
 # Scan tokens
 scan_tokens(L)
