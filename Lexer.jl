@@ -46,6 +46,13 @@ function scan_token(lexer::Lexer)
                 else 
                     add_token(lexer, SLASH)
                 end
+        ' ' => nothing
+        '\r' => nothing
+        '\t' => nothing
+        '\n' => begin 
+                lexer.line += 1
+                nothing
+            end
 
         _   => error("Unexpected character on line.")
     end
@@ -88,7 +95,7 @@ end
 
 
 # Create an instance of Lexer with an empty tokens array
-L = Lexer("//============", Vector{Token}(), 1, 1, 1)
+L = Lexer(" \t\r \n== + - *", Vector{Token}(), 1, 1, 1)
 
 # Scan tokens
 scan_tokens(L)
