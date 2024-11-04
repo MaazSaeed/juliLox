@@ -1,3 +1,5 @@
+import Base: peek
+
 using Match
 include("TokenType.jl")
 include("Token.jl")
@@ -37,14 +39,28 @@ function scan_token(lexer::Lexer)
         '=' => add_token(lexer, match(lexer, '=') ? EQUAL_EQUAL : EQUAL)
         '<' => add_token(lexer, match(lexer, '=') ? LESS_EQUAL : LESS)
         '>' => add_token(lexer, match(lexer, '=') ? GREATER_EQUAL : GREATER)
+        '/' =>  if match(lexer, '/')
+                 while peek(lexer) != '\n' && !is_at_end(lexer)
+                    advance!(lexer)
+                 end
+                else 
+                    add_token(lexer, SLASH)
+                end
 
         _   => error("Unexpected character on line.")
     end
 end
 
+function peek(lexer::Lexer)
+    if is_at_end(lexer) return '\0' end
+    lexer.source[lexer.current]
+end
+
 function match(lexer::Lexer, expected::Char)
     if is_at_end(lexer) return false end
-    if lexer.source[lexer.current] != expected return false end
+    if lexer.source[lexer.current] != expected
+         return false
+     end
 
     advance!(lexer) # Consume the character
     return true
@@ -72,7 +88,7 @@ end
 
 
 # Create an instance of Lexer with an empty tokens array
-L = Lexer("!=,==,>=,<=", Vector{Token}(), 1, 1, 1)
+L = Lexer("//============", Vector{Token}(), 1, 1, 1)
 
 # Scan tokens
 scan_tokens(L)
