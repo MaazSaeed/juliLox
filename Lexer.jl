@@ -4,6 +4,25 @@ using Match
 include("TokenType.jl")
 include("Token.jl")
 
+const RESERVED_WORDS = Dict(
+    "and" => AND,
+    "class" => CLASS,
+    "else" => ELSE,
+    "false" => FALSE,
+    "for" => FOR,
+    "fun" => FUN,
+    "if" => IF,
+    "nil" => NIL,
+    "or" => OR,
+    "print" => PRINT,
+    "return" => RETURN,
+    "super" => SUPER,
+    "this" => THIS,
+    "true" => TRUE,
+    "var" => VAR,
+    "while" => WHILE
+)
+
 mutable struct Lexer
     source::String       # Source code
     tokens::Vector{Token} # To be filled with tokens
@@ -72,7 +91,9 @@ function identifier(lexer::Lexer)
     while is_alpha_numeric(peek(lexer))
         advance!(lexer)
     end
-    add_token(lexer, IDENTIFIER)
+    text = lexer.source[lexer.start : lexer.current - 1]
+    type = get(RESERVED_WORDS, text, IDENTIFIER) # Final value is fallback if the given key is not available in the dictionary
+    add_token(lexer, type)
 end
 
 function is_alpha_numeric(ch::Char)
@@ -164,7 +185,7 @@ function string(lexer::Lexer)
 end
 
 # Create an instance of Lexer with an empty tokens array
-L = Lexer(" 36.14 plus velocity", Vector{Token}(), 1, 1, 1)
+L = Lexer("3 + 4 and velocity", Vector{Token}(), 1, 1, 1)
 
 # Scan tokens
 scan_tokens(L)
