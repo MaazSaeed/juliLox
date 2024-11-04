@@ -56,10 +56,27 @@ function scan_token(lexer::Lexer)
         '"' => string(lexer)
         _   => if is_digit(ch)
                 number(lexer)
+        elseif is_alpha(ch)
+            identifier(lexer)
                else
                     error("Unexpected character.")
                end
         end
+end
+
+function is_alpha(ch::Char)
+    ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z' || ch == '_'
+end
+
+function identifier(lexer::Lexer)
+    while is_alpha_numeric(peek(lexer))
+        advance!(lexer)
+    end
+    add_token(lexer, IDENTIFIER)
+end
+
+function is_alpha_numeric(ch::Char)
+    is_alpha(ch) || is_digit(ch)
 end
 
 function is_digit(ch::Char)
@@ -147,7 +164,7 @@ function string(lexer::Lexer)
 end
 
 # Create an instance of Lexer with an empty tokens array
-L = Lexer(" 36.14 ", Vector{Token}(), 1, 1, 1)
+L = Lexer(" 36.14 plus velocity", Vector{Token}(), 1, 1, 1)
 
 # Scan tokens
 scan_tokens(L)
