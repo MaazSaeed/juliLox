@@ -53,6 +53,7 @@ function scan_token(lexer::Lexer)
                 lexer.line += 1; 
                 nothing;
             end
+        '"' => string(lexer)
 
         _   => error("Unexpected character on line.")
     end
@@ -92,10 +93,28 @@ function add_token(lexer::Lexer, type::TokenType, literal::Any)
     push!(lexer.tokens, Token(type, text, literal, lexer.line))
 end
 
+function string(lexer::Lexer)
+    while peek(lexer) != '"' && !is_at_end(lexer)
+        if peek(lexer) == '\n'
+            lexer.line += 1
+        end
+        advance!(lexer)
+    end
 
+    if is_at_end(lexer)
+        error("Unterminated string.")
+        return
+    end
+
+    advance!(lexer) # Consume the closing pair '"'
+
+    value = lexer.source[lexer.start + 1 : lexer.current - 2]
+    
+    add_token(lexer, STRING, value) 
+end
 
 # Create an instance of Lexer with an empty tokens array
-L = Lexer(" \t\r \n== + - *", Vector{Token}(), 1, 1, 1)
+L = Lexer(" \"well well well\" ", Vector{Token}(), 1, 1, 1)
 
 # Scan tokens
 scan_tokens(L)
