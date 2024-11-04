@@ -49,9 +49,9 @@ function scan_token(lexer::Lexer)
         ' ' => nothing
         '\r' => nothing
         '\t' => nothing
-        '\n' => begin 
-                lexer.line += 1
-                nothing
+        '\n' => let 
+                lexer.line += 1; 
+                nothing;
             end
 
         _   => error("Unexpected character on line.")
