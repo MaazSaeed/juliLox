@@ -1,11 +1,12 @@
 module astgenerator
 using MacroTools
 
-export @generateast  # Export the macro
+export @generateast  # Make visible outside module
 
 abstract type Expr end
 
-file_path = joinpath(pwd(), "Expr.jl")
+# Output the file to the current directory
+file_path = joinpath(pwd(), "Expr.jl") 
 
 macro generateast(exprs)
     expressions = []
@@ -53,12 +54,10 @@ macro generateast(exprs)
     nothing
 end
 
-end # module
+end
 
-# Use the module
 using .astgenerator
 
-# Generate the AST types
 @generateast [
                 "Binary : Expr left, Token operator, Expr right",
                 "Grouping : Expr expressions",
