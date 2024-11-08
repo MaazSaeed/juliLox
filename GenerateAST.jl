@@ -48,7 +48,7 @@ macro generateast(exprs)
             write(file, gen_code * "\n\n")
         end
 
-        println("Generated $type struct! Appended to: $file_path")
+        println("Generated $type node! Appended to: $file_path")
     end
     
     nothing
