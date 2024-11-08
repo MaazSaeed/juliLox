@@ -1,29 +1,67 @@
-#import Pkg; Pkg.add("MacroTools");
 module astgenerator
-include("Token.jl")
-include("TokenType.jl")
-
 using MacroTools
+
+export @generateast  # Export the macro
 
 abstract type Expr end
 
-macro genexpr(type, fields...)
-    field_pairs = [:($(field.args[1])::$(field.args[2])) for field in fields]
+file_path = joinpath(pwd(), "Expr.jl")
+
+macro generateast(exprs)
+    expressions = []
     
-    expr = quote
-        struct $(esc(type)) <: Expr
-            $(field_pairs...)
-        end
+    open(file_path, "w") do file
+        write(file, "abstract type Expr end\n\n")
     end
+    
+    for expr in expressions
+        expr_and_fields = strip.(split(expr, ":"))
+        
+        type = expr_and_fields[1]
+        fields = expr_and_fields[2]
 
-    # For debugging purposes
-    # @show expr 
+        # Split fields into pairs
+        fields = strip.(split(fields, ","))
+        
+        field_pairs = [
+                        quote 
+                            field_name = split(f, " ")[2]
+                            field_type = split(f, " ")[1]
 
-    expr
+                            :($(Symbol(field_name))::($(Symbol(field_type))))
+                        end
+
+                        for f in fields]
+
+        type_expr = :(
+            struct $(Symbol(type)) <: Expr
+                $(field_pairs...)
+            end
+        )
+
+        # Convert to string
+        gen_code = string(type_expr)
+
+        # Append to the file
+        open(file_path, "a") do file
+            write(file, gen_code * "\n\n")
+        end
+
+        println("Generated $type struct! Appended to: $file_path")
+    end
+    
+    nothing
 end
 
-@genexpr Binary left::Expr operator::Token right::Expr
-end
+end # module
 
+# Use the module
+using .astgenerator
 
-
+# Generate the AST types
+@generateast [
+                "Binary : Expr left, Token operator, Expr right",
+                "Grouping : Expr expressions",
+                "Literal : Any value",
+                "Unary : Token operator, Expr right"
+             ]
