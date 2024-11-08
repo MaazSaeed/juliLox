@@ -7,6 +7,8 @@ struct Token
     line::Int64
 end
 
+#=
 function to_string(token::Token)
     string(token.type, " ", token.lexeme, " ", token.literal)
 end
+=#
