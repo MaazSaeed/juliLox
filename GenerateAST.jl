@@ -27,7 +27,10 @@ macro generateast(exprs)
         fields = strip.(split(fields_str, ","))
 
         field_pairs = [
-            :( $(Symbol(split(field, " ")[2]))::$(Symbol(split(field, " ")[1])) )
+            begin
+                field_type, field_name = split(field, " ")
+                :( $(Symbol(field_name))::$(Symbol(field_type)) )
+            end
             for field in fields
         ]
 

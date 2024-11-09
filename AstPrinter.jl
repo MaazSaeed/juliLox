@@ -1,5 +1,5 @@
-include("Token.jl")
 include("TokenType.jl")
+include("Token.jl")
 include("Expr.jl")
 
 abstract type astPrinter end
