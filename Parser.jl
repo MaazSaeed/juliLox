@@ -1,14 +1,21 @@
 include("Token.jl")
 include("TokenType.jl")
+include("Expr.jl")
 
-struct Parser
-    tokens::AbstractVector{Token}
+mutable struct Parser
+    tokens::Vector{Token}
     current::Int
 end
 
-function expression(parser::Parser)
-    equality()
+struct ParseError <: Exception
+    message::String 
+    line::Int
 end
+
+function expression(parser::Parser)
+    equality(parser)
+end
+
 
 function equality(parser::Parser)
     expr = comparison(parser)
@@ -81,7 +88,7 @@ function term(parser::Parser)
     while match(parser, MINUS, PLUS)
         operator = previous(parser)
         right = factor(parser)
-        expr = Binary(epxr, operator, right)
+        expr = Binary(expr, operator, right)
     end
 
     expr 
@@ -115,7 +122,7 @@ function primary(parser::Parser)
     if match(parser, TRUE) return Literal(true) end
     if match(parser, NIL) return Literal(nothing) end
     
-    if match(parser, NUMEBR, STRING)
+    if match(parser, NUMBER, STRING)
         return Literal(previous(parser).literal)
     end
 
@@ -128,4 +135,51 @@ function primary(parser::Parser)
     end
 end
 
-function consume(parser::Parser, type::Token, msg::String) end
+function consume(parser::Parser, type::Token, msg::String)
+    if check(parser, type) return advance(parser) end
+end
+
+
+function error(token::Token, message::String)
+    if token.type == EOF 
+        report(token.line, " at end", message)
+    else
+        report(token.line, " at '$(token.lexeme)'", message)
+    end
+
+    ParseError(message, token.line)
+end
+
+function synchronize(parser::Parser)
+    advance(parser)
+
+    while !is_at_end(parser)
+        if previous(parser).type == SEMICOLON
+            return
+        end
+
+        if peek(parser).type in [CLASS FOR FUN IF PRINT RETURN VAR WHILE]
+            return
+        end
+
+        advance(parser)
+    end
+
+end
+
+function report(token::Token, where::String, message::String)
+    println("[line $(token.line)] Error: $where : $message")
+end
+
+
+function parse(parser::Parser)
+    try
+        return expression(parser)
+    catch err
+        if err isa ParseError
+            synchronize(parser)
+            return nothing
+        end
+        rethrow(err)
+    end
+end
