@@ -39,7 +39,7 @@ macro generateast(exprs)
 
         # Write each node to the file
         open(file_path, "a") do file
-            write(file, string(type_expr) * "\n\n")
+            write(file, replace(string(type_expr), r"#=.*=#" => "") * "\n\n")
         end
 
         println("Generated $type node! Appended to: $file_path")
