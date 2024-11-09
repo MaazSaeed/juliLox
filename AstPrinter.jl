@@ -5,17 +5,18 @@ include("Expr.jl")
 abstract type astPrinter end
 struct prettyPrinting <: astPrinter end
 
-function parenthesize(visitor::prettyPrinting, name, exprs...)
+accept(expr::Binary, visitor::astPrinter) = visitNode(visitor, expr)
+accept(expr::Unary, visitor::astPrinter) = visitNode(visitor, expr)
+accept(expr::Grouping, visitor::astPrinter) = visitNode(visitor, expr)
+accept(expr::Literal, visitor::astPrinter) = visitNode(visitor, expr)
+
+function parenthesize(name, exprs...)
     lisptified = "($(name)"
     for expr in exprs 
         lisptified *= " "
-        lisptified *= visitNode(visitor, expr)
+        lisptified *= accept(visitor, expr)
     end
     lisptified *= ")"
-end
-
-function print(visitor::prettyPrinting, expr::Expr)
-    visitNode(visitor, expr)
 end
 
 function visitNode(visitor::prettyPrinting, expr::Unary) 
@@ -34,6 +35,10 @@ function visitNode(visitor::prettyPrinting, expr::Binary)
     parenthesize(visitor, expr.operator.lexeme, expr.left, expr.right)
 end
 
+function print(expr::Expr)
+    accept(expr, prettyPrinting())
+end
+
 expr = Binary(
     Unary(
         Token(MINUS, "-", nothing, 1),
@@ -45,5 +50,4 @@ expr = Binary(
     )
 )
 
-
-print(prettyPrinting(), expr)
+print(expr)
