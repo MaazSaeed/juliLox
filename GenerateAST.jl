@@ -1,38 +1,35 @@
+#import Pkg; Pkg.add("Revise")
+
 module astgenerator
 using MacroTools
+using Revise
 
-export @generateast  # Make visible outside module
+export @generateast # Make visible outside module
 
-abstract type Expr end
-
-# Output the file to the current directory
-file_path = joinpath(pwd(), "Expr.jl") 
+# Output file path
+file_path = joinpath(pwd(), "Expr.jl")
 
 macro generateast(exprs)
-    expressions = []
-    
     open(file_path, "w") do file
         write(file, "abstract type Expr end\n\n")
     end
-    
-    for expr in expressions
-        expr_and_fields = strip.(split(expr, ":"))
-        
+
+    # Loop over each entry in `exprs`
+    for expr in exprs.args
+        # Parse each element of the expression list
+        expr_str = String(expr)
+
+        expr_and_fields = strip.(split(expr_str, ":"))
         type = expr_and_fields[1]
-        fields = expr_and_fields[2]
+        fields_str = expr_and_fields[2]
 
         # Split fields into pairs
-        fields = strip.(split(fields, ","))
-        
+        fields = strip.(split(fields_str, ","))
+
         field_pairs = [
-                        quote 
-                            field_name = split(f, " ")[2]
-                            field_type = split(f, " ")[1]
-
-                            :($(Symbol(field_name))::($(Symbol(field_type))))
-                        end
-
-                        for f in fields]
+            :( $(Symbol(split(field, " ")[2]))::$(Symbol(split(field, " ")[1])) )
+            for field in fields
+        ]
 
         type_expr = :(
             struct $(Symbol(type)) <: Expr
@@ -40,17 +37,14 @@ macro generateast(exprs)
             end
         )
 
-        # Convert to string
-        gen_code = string(type_expr)
-
-        # Append to the file
+        # Write each node to the file
         open(file_path, "a") do file
-            write(file, gen_code * "\n\n")
+            write(file, string(type_expr) * "\n\n")
         end
 
         println("Generated $type node! Appended to: $file_path")
     end
-    
+
     nothing
 end
 
@@ -59,7 +53,8 @@ end
 using .astgenerator
 
 @generateast [
-                "Binary : Expr left, Token operator, Expr right",
-                "Grouping : Expr expressions",
-                "Literal : Any value",
-                             ]
+    "Binary : Expr left, Token operator, Expr right",
+    "Grouping : Expr expressions",
+    "Literal : Any value",
+    "Unary : Token operator, Expr right"
+]
